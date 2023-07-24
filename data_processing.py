@@ -17,7 +17,7 @@ def replace_in_all_lines(template, replacement, lines):
     return result
 
 
-with open('materials/examples.txt', encoding='utf-8') as f:
+with open('materials/sentences_8lfi.txt', encoding='utf-8') as f:
     lines = f.readlines()
 
 # raw_lines = [x for x in lines if x.startswith('\t\t')]
