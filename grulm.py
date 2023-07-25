@@ -1,19 +1,21 @@
-import lightning as L
 import torch
 import torch.nn as nn
 
+from sp_lightning_module import SpLightningModule
 
-class GRULM(L.LightningModule):
-    def __init__(self, hidden_dim, vocab_size, pad_id):
-        super().__init__()
-        self.vocab_size = vocab_size
-        self.embedding = nn.Embedding(vocab_size, hidden_dim)
+
+class GRULM(SpLightningModule):
+    def __init__(self, hidden_dim, sp_tokenizer_file_name, learning_rate):
+        super().__init__(sp_tokenizer_file_name)
+        # self.sp = spm.SentencePieceProcessor(sp_tokenizer_file_name)
+        self.learning_rate = learning_rate
+        self.embedding = nn.Embedding(self.sp.vocab_size(), hidden_dim)
         self.rnn = nn.GRU(hidden_dim, hidden_dim, batch_first=True)
 
-        self.head = nn.Linear(hidden_dim, vocab_size)
+        self.head = nn.Linear(hidden_dim, self.sp.vocab_size())
 
-        self.loss = nn.CrossEntropyLoss(ignore_index=pad_id)
-        self.example_input_array = torch.ones(110, dtype=torch.int32)
+        self.loss = nn.CrossEntropyLoss(ignore_index=self.sp.pad_id())
+        self.example_input_array = torch.ones(228, dtype=torch.int32)
 
     def forward(self, x):
         x = self.embedding(x)
@@ -43,5 +45,25 @@ class GRULM(L.LightningModule):
         self.log_dict({'eval_loss': loss, 'eval_pp': perplexity}, prog_bar=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
+
+    def generate_sequence(self, sample, max_len):
+        tokenized_sample = torch.LongTensor(
+            [self.sp.bos_id()] + (self.sp.encode_as_ids(sample))) if isinstance(
+            sample,
+            str) else sample
+
+        result_ids = tokenized_sample.tolist()
+
+        next_word = self(tokenized_sample)[-1].argmax()
+        result_ids.append(next_word.item())
+        c = 1
+
+        while c < max_len and next_word.item() is not self.sp.eos_id():
+            tokenized_sample = torch.cat([tokenized_sample, next_word.unsqueeze(0)])
+            next_word = self(tokenized_sample)[-1].argmax()
+            result_ids.append(next_word.item())
+            c = c + 1
+
+        return self.sp.decode_ids(result_ids)

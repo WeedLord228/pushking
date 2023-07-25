@@ -268,3 +268,6 @@ lightning_logs/
 tb_logs/
 /.idea/codeStyles/codeStyleConfig.xml
 /pushking.ipynb
+
+# Sentencepiece artifacts
+spm_artifacts/
