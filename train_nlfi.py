@@ -1,10 +1,11 @@
 import random
 from datetime import datetime
+import glob
 
 import lightning as L
 import numpy as np
 import torch
-from lightning.pytorch.callbacks import RichProgressBar
+from lightning.pytorch.callbacks import RichProgressBar, ModelCheckpoint
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
 from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
@@ -34,31 +35,50 @@ grulm = GRULM(HIDDEN_DIM, f'{SP_ARTIFACTS_DIR}/{SP_MODEL_PREFIX}.model', LEARNIN
 
 train_dataset = DatasetNlfi(TRAIN_DATA_FILE, grulm.sp, N_LINES)
 eval_dataset = DatasetNlfi(EVAL_DATA_FILE, grulm.sp, N_LINES)
-train_dataloader = DataLoader(dataset=train_dataset,
-                              batch_size=BATCH_SIZE,
-                              collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()))
-eval_dataloader = DataLoader(dataset=eval_dataset,
-                             batch_size=BATCH_SIZE,
-                             collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()))
+train_dataloader = DataLoader(
+    dataset=train_dataset,
+    batch_size=BATCH_SIZE,
+    collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
+)
+eval_dataloader = DataLoader(
+    dataset=eval_dataset,
+    batch_size=BATCH_SIZE,
+    collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
+)
 
-date = datetime.now().strftime("%d.%m.%y_%H.%M")
+date = datetime.now().strftime('%d.%m.%y_%H.%M')
 version_name = f'{LOG_SUBDIR}_{N_LINES}l_{LEARNING_RATE}lr_{HIDDEN_DIM}hd_{date}'
-logger = TensorBoardLogger(save_dir=LOG_DIR,
-                           name=LOG_SUBDIR,
-                           log_graph=True,
-                           version=version_name)
+logger = TensorBoardLogger(
+    save_dir=LOG_DIR,
+    name=LOG_SUBDIR,
+    log_graph=True,
+    version=version_name
+)
 
-trainer = L.Trainer(max_epochs=MAX_EPOCH,
-                    logger=logger,
-                    callbacks=RichProgressBar(
-                        theme=RichProgressBarTheme(description="rgb(197,0,27)",
-                                                   progress_bar="rgb(175,0,255)",
-                                                   progress_bar_finished="rgb(77,167,73)",
-                                                   time="rgb(175,0,255)",
-                                                   metrics="rgb(175,175,255)"))
-                    )
+checkpoint_callback = ModelCheckpoint(
+    dirpath=f'{LOG_DIR}/{LOG_SUBDIR}/{version_name}',
+    filename='grulm_{epoch:2d}_{eval_loss:0.2f}_{eval_pp:0.2f}',
+    monitor='eval_loss'
+)
+
+rich_progress_bar_callback = RichProgressBar(
+    theme=RichProgressBarTheme(description="rgb(197,0,27)",
+                               progress_bar="rgb(175,0,255)",
+                               progress_bar_finished="rgb(77,167,73)",
+                               time="rgb(175,0,255)",
+                               metrics="rgb(175,175,255)"))
+
+trainer = L.Trainer(
+    max_epochs=MAX_EPOCH,
+    logger=logger,
+    callbacks=[rich_progress_bar_callback, checkpoint_callback]
+)
 trainer.fit(grulm, train_dataloader, eval_dataloader)
 
+# Text generation based on sequence
+# Loading best checkpoint
+# TODO
+grulm = GRULM.load_from_checkpoint(f'./{glob.glob(f"{LOG_DIR}/{LOG_SUBDIR}/{version_name}/*.ckpt")[0]}').to('cpu')
 sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
 input_sample = grulm.sp.decode_ids(sample.tolist()[:10])
 sample_generate_log = f'Original: {grulm.sp.decode_ids(sample.tolist())}\n' \
@@ -66,7 +86,7 @@ sample_generate_log = f'Original: {grulm.sp.decode_ids(sample.tolist())}\n' \
                       f'Output: {grulm.generate_sequence(input_sample, 512)}'
 print(sample_generate_log)
 
-sample_generate_log_file_name = f'{LOG_DIR}/{LOG_SUBDIR}/{version_name}/sample_generate_log.txt'
+sample_generate_log_file_name = f'{LOG_DIR}/{LOG_SUBDIR}/{version_name}/best_sample_generate_log.txt'
 sample_generate_log_file_mode = 'w'
 
 with open(sample_generate_log_file_name, sample_generate_log_file_mode, encoding='UTF-8') as file:

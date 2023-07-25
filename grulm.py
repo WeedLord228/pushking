@@ -7,7 +7,7 @@ from sp_lightning_module import SpLightningModule
 class GRULM(SpLightningModule):
     def __init__(self, hidden_dim, sp_tokenizer_file_name, learning_rate):
         super().__init__(sp_tokenizer_file_name)
-        # self.sp = spm.SentencePieceProcessor(sp_tokenizer_file_name)
+        self.save_hyperparameters()
         self.learning_rate = learning_rate
         self.embedding = nn.Embedding(self.sp.vocab_size(), hidden_dim)
         self.rnn = nn.GRU(hidden_dim, hidden_dim, batch_first=True)
