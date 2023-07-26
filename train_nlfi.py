@@ -77,8 +77,11 @@ trainer.fit(grulm, train_dataloader, eval_dataloader)
 
 # Text generation based on sequence
 # Loading best checkpoint
-# TODO
-grulm = GRULM.load_from_checkpoint(f'./{glob.glob(f"{LOG_DIR}/{LOG_SUBDIR}/{version_name}/*.ckpt")[0]}').to('cpu')
+map_location = {'cuda:0': 'cpu'}
+grulm = GRULM.load_from_checkpoint(
+    f'./{glob.glob(f"{LOG_DIR}/{LOG_SUBDIR}/{version_name}/*.ckpt")[0]}',
+    map_location=map_location
+)
 sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
 input_sample = grulm.sp.decode_ids(sample.tolist()[:10])
 sample_generate_log = f'Original: {grulm.sp.decode_ids(sample.tolist())}\n' \
