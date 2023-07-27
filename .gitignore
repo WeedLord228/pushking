@@ -271,3 +271,4 @@ tb_logs/
 
 # Sentencepiece artifacts
 spm_artifacts/
+/outputs/

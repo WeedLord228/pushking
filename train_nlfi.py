@@ -1,96 +1,96 @@
+import glob
 import random
 from datetime import datetime
-import glob
 
+import hydra
 import lightning as L
 import numpy as np
 import torch
 from lightning.pytorch.callbacks import RichProgressBar, ModelCheckpoint
 from lightning.pytorch.callbacks.progress.rich_progress import RichProgressBarTheme
 from lightning.pytorch.loggers import TensorBoardLogger
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from dataset_nlfi import DatasetNlfi
 from grulm import GRULM
 from utils import collate_fn_padding_offseted_targets
 
-# TODO hydra
-SP_ARTIFACTS_DIR = 'spm_artifacts'
-SP_MODEL_PREFIX = 'sp_bpe_512'
-TRAIN_DATA_FILE = 'materials/train_nlfi.txt'
-EVAL_DATA_FILE = 'materials/eval_nlfi.txt'
-N_LINES = 8
-BATCH_SIZE = 16
-HIDDEN_DIM = 512
-MAX_EPOCH = 20
-LOG_DIR = 'tb_logs'
-LOG_SUBDIR = 'grulm'
-LEARNING_RATE = 1e-3
 
-seed = 228
-np.random.seed(seed)
-L.seed_everything(seed)
+@hydra.main(config_path='config', config_name='base_config')
+def train_nlfi(cfg: DictConfig):
+    sp_artifacts_dir, sp_model_prefix, train_data_file, eval_data_file, log_dir, log_subdir, batch_size, n_lines, \
+        learning_rate, hidden_dim, max_epoch = cfg.train_params.values()
 
-grulm = GRULM(HIDDEN_DIM, f'{SP_ARTIFACTS_DIR}/{SP_MODEL_PREFIX}.model', LEARNING_RATE)
+    seed = 228
+    np.random.seed(seed)
 
-train_dataset = DatasetNlfi(TRAIN_DATA_FILE, grulm.sp, N_LINES)
-eval_dataset = DatasetNlfi(EVAL_DATA_FILE, grulm.sp, N_LINES)
-train_dataloader = DataLoader(
-    dataset=train_dataset,
-    batch_size=BATCH_SIZE,
-    collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
-)
-eval_dataloader = DataLoader(
-    dataset=eval_dataset,
-    batch_size=BATCH_SIZE,
-    collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
-)
+    L.seed_everything(seed)
 
-date = datetime.now().strftime('%d.%m.%y_%H.%M')
-version_name = f'{LOG_SUBDIR}_{N_LINES}l_{LEARNING_RATE}lr_{HIDDEN_DIM}hd_{date}'
-logger = TensorBoardLogger(
-    save_dir=LOG_DIR,
-    name=LOG_SUBDIR,
-    log_graph=True,
-    version=version_name
-)
+    grulm = GRULM(hidden_dim, f'{sp_artifacts_dir}/{sp_model_prefix}.model', learning_rate)
+    train_dataset = DatasetNlfi(train_data_file, grulm.sp, n_lines)
+    eval_dataset = DatasetNlfi(eval_data_file, grulm.sp, n_lines)
+    train_dataloader = DataLoader(
+        dataset=train_dataset,
+        batch_size=batch_size,
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
+    )
 
-checkpoint_callback = ModelCheckpoint(
-    dirpath=f'{LOG_DIR}/{LOG_SUBDIR}/{version_name}',
-    filename='grulm_{epoch:2d}_{eval_loss:0.2f}_{eval_pp:0.2f}',
-    monitor='eval_loss'
-)
+    eval_dataloader = DataLoader(
+        dataset=eval_dataset,
+        batch_size=batch_size,
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id())
+    )
+    date = datetime.now().strftime('%d.%m.%y_%H.%M')
+    version_name = f'{log_subdir}_{n_lines}l_{learning_rate}lr_{hidden_dim}hd_{date}'
 
-rich_progress_bar_callback = RichProgressBar(
-    theme=RichProgressBarTheme(description="rgb(197,0,27)",
-                               progress_bar="rgb(175,0,255)",
-                               progress_bar_finished="rgb(77,167,73)",
-                               time="rgb(175,0,255)",
-                               metrics="rgb(175,175,255)"))
+    logger = TensorBoardLogger(
+        save_dir=log_dir,
+        name=log_subdir,
+        log_graph=True,
+        version=version_name
+    )
 
-trainer = L.Trainer(
-    max_epochs=MAX_EPOCH,
-    logger=logger,
-    callbacks=[rich_progress_bar_callback, checkpoint_callback]
-)
-trainer.fit(grulm, train_dataloader, eval_dataloader)
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=f'{log_dir}/{log_subdir}/{version_name}',
+        filename='grulm_{epoch:2d}_{eval_loss:0.2f}_{eval_pp:0.2f}',
+        monitor='eval_loss'
+    )
 
-# Text generation based on sequence
-# Loading best checkpoint
-map_location = {'cuda:0': 'cpu'}
-grulm = GRULM.load_from_checkpoint(
-    f'./{glob.glob(f"{LOG_DIR}/{LOG_SUBDIR}/{version_name}/*.ckpt")[0]}',
-    map_location=map_location
-)
-sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
-input_sample = grulm.sp.decode_ids(sample.tolist()[:10])
-sample_generate_log = f'Original: {grulm.sp.decode_ids(sample.tolist())}\n' \
-                      f'Input: {input_sample}\n' \
-                      f'Output: {grulm.generate_sequence(input_sample, 512)}'
-print(sample_generate_log)
+    rich_progress_bar_callback = RichProgressBar(
+        theme=RichProgressBarTheme(description="rgb(197,0,27)",
+                                   progress_bar="rgb(175,0,255)",
+                                   progress_bar_finished="rgb(77,167,73)",
+                                   time="rgb(175,0,255)",
+                                   metrics="rgb(175,175,255)"))
+    trainer = L.Trainer(
+        max_epochs=max_epoch,
+        logger=logger,
+        callbacks=[rich_progress_bar_callback, checkpoint_callback]
+    )
 
-sample_generate_log_file_name = f'{LOG_DIR}/{LOG_SUBDIR}/{version_name}/best_sample_generate_log.txt'
-sample_generate_log_file_mode = 'w'
+    trainer.fit(grulm, train_dataloader, eval_dataloader)
+    # Text generation based on sequence
+    # Loading best checkpoint
+    map_location = {'cuda:0': 'cpu'}
+    grulm = GRULM.load_from_checkpoint(
+        f'./{glob.glob(f"{log_dir}/{log_subdir}/{version_name}/*.ckpt")[0]}',
+        map_location=map_location
+    )
+    sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
+    input_sample = grulm.sp.decode_ids(sample.tolist()[:10])
+    sample_generate_log = f'Original: {grulm.sp.decode_ids(sample.tolist())}\n' \
+                          f'Input: {input_sample}\n' \
+                          f'Output: {grulm.generate_sequence(input_sample, 512)}'
 
-with open(sample_generate_log_file_name, sample_generate_log_file_mode, encoding='UTF-8') as file:
-    file.write(sample_generate_log)
+    print(sample_generate_log)
+    sample_generate_log_file_name = f'{log_dir}/{log_subdir}/{version_name}/best_sample_generate_log.txt'
+
+    sample_generate_log_file_mode = 'w'
+
+    with open(sample_generate_log_file_name, sample_generate_log_file_mode, encoding='UTF-8') as file:
+        file.write(sample_generate_log)
+
+
+if __name__ == '__main__':
+    train_nlfi()
