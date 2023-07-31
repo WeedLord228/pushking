@@ -1,0 +1,25 @@
+defaults:
+  - base_config
+
+hydra:
+  sweeper:
+    params:
+      train.dataset.n_lines: 5,8
+      trainer.learning_rate: 3e-4,1e-4,1e-5
+      model.hidden_dim: 256, 512, 768, 1024
+      train.dataloader.batch_size: 16, 32, 64, 128
+      tokenizer.model_prefix: sp_bpe_512, sp_bpe_256, sp_bpe_1024
+
+tokenizer:
+  dir: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/spm_artifacts'
+
+train:
+  dataset:
+    data: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/materials/train_nlfi.txt'
+
+eval:
+  dataset:
+    data: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/materials/eval_nlfi.txt'
+
+trainer:
+  max_epoch: 50

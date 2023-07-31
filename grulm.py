@@ -56,6 +56,7 @@ class GRULM(SpLightningModule):
 
         result_ids = tokenized_sample.tolist()
 
+        tokenized_sample = tokenized_sample.to(self.device)
         next_word = self(tokenized_sample)[-1].argmax()
         result_ids.append(next_word.item())
         c = 1

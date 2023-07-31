@@ -1,8 +1,0 @@
-defaults:
-  - base_config
-
-train_params:
-  n_lines: 8
-  learning_rate: 1e-3
-  hidden_dim: 512
-  max_epoch: 2

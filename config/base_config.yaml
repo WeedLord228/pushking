@@ -3,21 +3,37 @@ defaults:
   - override hydra/hydra_logging: disabled
   - override hydra/job_logging: disabled
 
-train_params:
-  sp_artifacts_dir: 'spm_artifacts'
-  sp_model_prefix: 'sp_bpe_512'
-  train_data_file: 'materials/train_nlfi.txt'
-  eval_data_file: 'materials/eval_nlfi.txt'
-  log_dir: 'tb_logs'
-  log_subdir: 'grulm'
-  batch_size: 16
-
-  n_lines: 8
-  learning_rate: 1e-3
-  hidden_dim: 512
-  max_epoch: 20
-
 hydra:
   output_subdir: null
   run:
     dir: .
+
+tokenizer:
+  dir: 'spm_artifacts'
+  model_prefix: 'sp_bpe_512'
+
+train:
+  dataset:
+    data: 'materials/train_nlfi.txt'
+    n_lines: 8
+  dataloader:
+    batch_size: 16
+
+eval:
+  dataset:
+    data: 'materials/eval_nlfi.txt'
+    n_lines: ${train.dataset.n_lines}
+  dataloader:
+    batch_size: ${train.dataloader.batch_size}
+
+loggers:
+  tensorboard:
+    dir: 'tb_logs'
+    subdir: 'grulm'
+
+model:
+  hidden_dim: 512
+
+trainer:
+  learning_rate: 1e-3
+  max_epoch: 20

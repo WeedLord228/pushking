@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(
     description='This module is used to train sentencepiece tokenizer'
 )
 parser.add_argument(
-    '--filename',
+    '--file_name',
     type=str,
     help='path to source data which tokenizer will be trained on',
     default='materials/sentences_nlfi.txt',
@@ -37,14 +37,11 @@ parser.add_argument('--eos_id', type=int, default=3, required=False)
 
 args = parser.parse_args()
 
-SP_INPUT_FILE_NAME, SPM_ARTIFACTS_DIR, SP_VOCAB_SIZE, SP_MODEL_TYPE, SP_PAD_ID, SP_UNK_ID, SP_BOS_ID, SP_EOS_ID = \
-    args.__reduce__()[2].values()
+SP_MODEL_PREFIX = f'{args.artifacts_dir}/sp_{args.model_type}_{args.vocab_size}'
 
-SP_MODEL_PREFIX = f'{SPM_ARTIFACTS_DIR}/sp_{SP_MODEL_TYPE}_{SP_VOCAB_SIZE}'
-
-sp_train_command = f'--input={SP_INPUT_FILE_NAME} --model_prefix={SP_MODEL_PREFIX}' \
-                   f' --vocab_size={SP_VOCAB_SIZE} --model_type={SP_MODEL_TYPE}' \
-                   f' --pad_id={SP_PAD_ID} --unk_id={SP_UNK_ID} --bos_id={SP_BOS_ID}' \
-                   f' --eos_id={SP_EOS_ID}'
+sp_train_command = f'--input={args.file_name} --model_prefix={SP_MODEL_PREFIX}' \
+                   f' --vocab_size={args.vocab_size} --model_type={args.model_type}' \
+                   f' --pad_id={args.pad_id} --unk_id={args.unk_id} --bos_id={args.bos_id}' \
+                   f' --eos_id={args.eos_id}'
 
 spm.SentencePieceTrainer.train(sp_train_command)
