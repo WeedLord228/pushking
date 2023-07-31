@@ -1,0 +1,16 @@
+defaults:
+  - base_config
+
+tokenizer:
+  model_prefix: 'sp_bpe_256'
+
+train:
+  dataloader:
+    batch_size: 32
+
+model:
+  hidden_dim: 1024
+
+trainer:
+  learning_rate: 3e-4
+  max_epoch: 15
