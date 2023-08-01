@@ -16,15 +16,18 @@ from grulm import GRULM
 from utils import collate_fn_padding_offseted_targets
 
 
-@hydra.main(config_path='config', config_name='base_train_config')
+@hydra.main(config_path="config", config_name="base_train_config")
 def train_nlfi(cfg: DictConfig):
     seed = 228
     np.random.seed(seed)
 
     L.seed_everything(seed)
 
-    grulm = GRULM(cfg.model.hidden_dim, f'{cfg.model.tokenizer.dir}/{cfg.model.tokenizer.model_prefix}.model',
-                  cfg.trainer.learning_rate)
+    grulm = GRULM(
+        cfg.model.hidden_dim,
+        f"{cfg.model.tokenizer.dir}/{cfg.model.tokenizer.model_prefix}.model",
+        cfg.trainer.learning_rate,
+    )
     train_dataset = DatasetNlfi(cfg.train.dataset.data, grulm.sp, cfg.train.dataset.n_lines)
     eval_dataset = DatasetNlfi(cfg.eval.dataset.data, grulm.sp, cfg.eval.dataset.n_lines)
 
@@ -34,7 +37,7 @@ def train_nlfi(cfg: DictConfig):
         collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
         shuffle=True,
         pin_memory=True,
-        drop_last=True
+        drop_last=True,
     )
 
     eval_dataloader = DataLoader(
@@ -42,7 +45,7 @@ def train_nlfi(cfg: DictConfig):
         batch_size=cfg.eval.dataloader.batch_size,
         collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
         shuffle=False,
-        drop_last=False
+        drop_last=False,
     )
     date = datetime.now().strftime("%d.%m.%y_%H.%M")
     version_name = (
@@ -77,9 +80,7 @@ def train_nlfi(cfg: DictConfig):
     trainer.fit(grulm, train_dataloader, eval_dataloader)
     # Text generation based on sequence
     # Loading best checkpoint
-    grulm = GRULM.load_from_checkpoint(
-        checkpoint_callback.best_model_path
-    )
+    grulm = GRULM.load_from_checkpoint(checkpoint_callback.best_model_path)
     sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
     input_sample = grulm.tokenizer.decode_ids(sample.tolist()[:10])
     sample_generate_log = (
