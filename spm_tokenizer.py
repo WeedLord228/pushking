@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import sentencepiece as spm
 
@@ -36,6 +37,8 @@ parser.add_argument('--bos_id', type=int, default=2, required=False)
 parser.add_argument('--eos_id', type=int, default=3, required=False)
 
 args = parser.parse_args()
+
+os.makedirs(args.artifacts_dir, exist_ok=True)
 
 SP_MODEL_PREFIX = f'{args.artifacts_dir}/sp_{args.model_type}_{args.vocab_size}'
 
