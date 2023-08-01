@@ -15,46 +15,34 @@ from dataset_nlfi import DatasetNlfi
 from grulm import GRULM
 from utils import collate_fn_padding_offseted_targets
 
-# SP_ARTIFACTS_DIR_KEY = 'tokenizer.dir'
-# SP_MODEL_PREFIX_KEY = 'tokenizer.model_prefix'
-# TRAIN_DATA_FILE_KEY = 'train.dataset.data'
-# EVAL_DATA_FILE_KEY = 'eval.dataset.data'
-# TB_LOG_DIR_KEY = 'loggers.tensorboard.dir'
-# TB_LOG_SUBDIR_KEY = 'loggers.tensorboard.subdir'
-# TRAIN_BATCH_SIZE_KEY = 'train.dataloader.batch_size'
-# EVAL_BATCH_SIZE_KEY = 'eval.dataloader.batch_size'
-# TRAIN_N_LINES_KEY = 'train.dataset.n_lines'
-# EVAL_N_LINES_KEY = 'eval.dataset.n_lines'
-# LEARNING_RATE_KEY = 'trainer.learning_rate'
-# HIDDEN_DIM_KEY = 'model.hidden_dim'
-# MAX_EPOCH_KEY = 'trainer.max_epoch'
 
-# sp_artifacts_dir, sp_model_prefix, train_data_file, eval_data_file, log_dir, log_subdir, batch_size, n_lines, \
-#         learning_rate, hidden_dim, max_epoch = cfg.train_params.values()
-
-
-@hydra.main(config_path="config", config_name="base_config")
+@hydra.main(config_path='config', config_name='base_train_config')
 def train_nlfi(cfg: DictConfig):
     seed = 228
     np.random.seed(seed)
 
     L.seed_everything(seed)
 
-    grulm = GRULM(
-        cfg.model.hidden_dim, f"{cfg.tokenizer.dir}/{cfg.tokenizer.model_prefix}.model", cfg.trainer.learning_rate
-    )
-    train_dataset = DatasetNlfi(cfg.train.dataset.data, grulm.tokenizer, cfg.train.dataset.n_lines)
-    eval_dataset = DatasetNlfi(cfg.eval.dataset.data, grulm.tokenizer, cfg.eval.dataset.n_lines)
+    grulm = GRULM(cfg.model.hidden_dim, f'{cfg.model.tokenizer.dir}/{cfg.model.tokenizer.model_prefix}.model',
+                  cfg.trainer.learning_rate)
+    train_dataset = DatasetNlfi(cfg.train.dataset.data, grulm.sp, cfg.train.dataset.n_lines)
+    eval_dataset = DatasetNlfi(cfg.eval.dataset.data, grulm.sp, cfg.eval.dataset.n_lines)
+
     train_dataloader = DataLoader(
         dataset=train_dataset,
         batch_size=cfg.train.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.tokenizer.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
+        shuffle=True,
+        pin_memory=True,
+        drop_last=True
     )
 
     eval_dataloader = DataLoader(
         dataset=eval_dataset,
         batch_size=cfg.eval.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.tokenizer.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
+        shuffle=False,
+        drop_last=False
     )
     date = datetime.now().strftime("%d.%m.%y_%H.%M")
     version_name = (
@@ -89,10 +77,8 @@ def train_nlfi(cfg: DictConfig):
     trainer.fit(grulm, train_dataloader, eval_dataloader)
     # Text generation based on sequence
     # Loading best checkpoint
-    # map_location = {'cuda:0': 'cpu'}
     grulm = GRULM.load_from_checkpoint(
         checkpoint_callback.best_model_path
-        # map_location=map_location
     )
     sample = torch.LongTensor(train_dataset[random.randint(2, len(eval_dataloader))][0])
     input_sample = grulm.tokenizer.decode_ids(sample.tolist()[:10])
