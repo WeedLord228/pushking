@@ -1,0 +1,33 @@
+[MASTER]
+extension-pkg-whitelist=
+ignore=CVS
+ignore-patterns=
+jobs=1
+load-plugins=
+persistent=yes
+suggestion-mode=yes
+unsafe-load-any-extension=no
+
+[MESSAGES CONTROL]
+confidence=
+disable=raw-checker-failed,
+        bad-inline-option,
+        locally-disabled,
+        file-ignored,
+        suppressed-message,
+        useless-suppression,
+        deprecated-pragma,
+        use-symbolic-message-instead,
+        E1101,
+        C0116, # DOCSTRING
+        C0115, # DOCSTRING
+        C0114, # DOCSTRING
+        W1514, # ENCODING
+        R0901, # ANCESTORS
+        W0221  # BASE CLASS OVERRIDE MISSMATCH (PTL ISSUE)
+
+[FORMAT]
+max-line-length=120
+
+[BASIC]
+good-names=i,j,k,_,f,x,y
