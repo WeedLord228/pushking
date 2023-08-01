@@ -49,23 +49,26 @@ class GRULM(SpLightningModule):
         return optimizer
 
     def generate_sequence(self, sample, max_len):
-        tokenized_sample = (
-            torch.LongTensor([self.tokenizer.bos_id()] + (self.tokenizer.encode_as_ids(sample)))
-            if isinstance(sample, str)
-            else sample
-        )
+        with torch.no_grad:
+            tokenized_sample = (
+                torch.LongTensor([self.tokenizer.bos_id()] + (self.tokenizer.encode_as_ids(sample)))
+                if isinstance(sample, str)
+                else sample
+            )
 
-        result_ids = tokenized_sample.tolist()
+            result_ids = tokenized_sample.tolist()
 
-        tokenized_sample = tokenized_sample.to(self.device)
-        next_word = self(tokenized_sample)[-1].argmax()
-        result_ids.append(next_word.item())
-        count = 1
+            self.eval()
 
-        while count < max_len and next_word.item() is not self.tokenizer.eos_id():
-            tokenized_sample = torch.cat([tokenized_sample, next_word.unsqueeze(0)])
+            tokenized_sample = tokenized_sample.to(self.device)
             next_word = self(tokenized_sample)[-1].argmax()
             result_ids.append(next_word.item())
-            count = count + 1
+            count = 1
 
-        return self.tokenizer.decode_ids(result_ids)
+            while count < max_len and next_word.item() is not self.tokenizer.eos_id():
+                tokenized_sample = torch.cat([tokenized_sample, next_word.unsqueeze(0)])
+                next_word = self(tokenized_sample)[-1].argmax()
+                result_ids.append(next_word.item())
+                count = count + 1
+
+            return self.tokenizer.decode_ids(result_ids)
