@@ -1,0 +1,6 @@
+model:
+  path_to_checkpoint: 'C:\SeriousStuff\Notebooks\NLP\BONUS.pushking\multirun\2023-07-28\04-54-06\184\tb_logs\grulm\grulm_8l_0.0003lr_1024hd_28.07.23_10.20\grulm_epoch=11_eval_loss=3.08_eval_pp=21.97.ckpt'
+  max_tokens: 32
+
+log:
+  file: 'inference_log.txt'

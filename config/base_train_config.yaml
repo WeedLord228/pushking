@@ -8,10 +8,6 @@ hydra:
   run:
     dir: .
 
-tokenizer:
-  dir: 'spm_artifacts'
-  model_prefix: 'sp_bpe_512'
-
 train:
   dataset:
     data: 'materials/train_nlfi.txt'
@@ -32,6 +28,9 @@ loggers:
     subdir: 'grulm'
 
 model:
+  tokenizer:
+    dir: 'spm_artifacts'
+    model_prefix: 'sp_bpe_512'
   hidden_dim: 512
 
 trainer:

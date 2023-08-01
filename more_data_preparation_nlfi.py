@@ -24,4 +24,4 @@ with open(eval_file_name, eval_file_mode, encoding='UTF-8') as file:
     for line in data[train_threshold:]:
         file.write(line)
 
-print(f'Clean, processed data stored in "{train_file_name}" and "{eval_file_name}"')
+print(f"Clean, processed data stored in '{train_file_name}' and '{eval_file_name}'")

@@ -1,5 +1,5 @@
 defaults:
-  - base_config
+  - base_train_config
 
 tokenizer:
   model_prefix: 'sp_bpe_256'
