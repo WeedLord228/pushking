@@ -35,7 +35,7 @@ sp_train_command = (
     f"--input={args.file_name} --model_prefix={SP_MODEL_PREFIX}"
     f" --vocab_size={args.vocab_size} --model_type={args.model_type}"
     f" --pad_id={args.pad_id} --unk_id={args.unk_id} --bos_id={args.bos_id}"
-    f" --eos_id={args.eos_id}"
+    f" --eos_id={args.eos_id} --character_coverage=1.0"
 )
 
 spm.SentencePieceTrainer.train(sp_train_command)
