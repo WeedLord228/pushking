@@ -1,10 +1,10 @@
 import hydra
 from omegaconf import DictConfig
 
-from grulm import GRULM
+from models.grulm import GRULM
 
 
-@hydra.main(config_path="config", config_name="inference_config.yaml")
+@hydra.main(config_path="../config", config_name="inference_config.yaml")
 def inference(cfg: DictConfig):
     model = GRULM.load_from_checkpoint(cfg.model.path_to_checkpoint)
     with open(cfg.log.file, "w", encoding="UTF-8") as file:

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from sp_lightning_module import SpLightningModule
+from models import SpLightningModule
 
 
 class GRULM(SpLightningModule):

@@ -11,13 +11,18 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from dataset_nlfi import DatasetNlfi
-from grulm import GRULM
-from utils import collate_fn_padding_offseted_targets
+from datasets.dataset_nlfi import DatasetNlfi
+from models import GRULM
+from utils.data_utils import collate_fn_padding_offseted_targets
+
+
+# from datasets.dataset_nlfi import DatasetNlfi
+# from models.grulm import GRULM
+# from utils.data_utils import collate_fn_padding_offseted_targets
 
 
 @hydra.main(config_path="config", config_name="base_train_config")
-def train_nlfi(cfg: DictConfig):
+def train_grulm(cfg: DictConfig):
     seed = 228
     np.random.seed(seed)
 
@@ -28,13 +33,13 @@ def train_nlfi(cfg: DictConfig):
         f"{cfg.model.tokenizer.dir}/{cfg.model.tokenizer.model_prefix}.model",
         cfg.trainer.learning_rate,
     )
-    train_dataset = DatasetNlfi(cfg.train.dataset.data, grulm.sp, cfg.train.dataset.n_lines)
-    eval_dataset = DatasetNlfi(cfg.eval.dataset.data, grulm.sp, cfg.eval.dataset.n_lines)
+    train_dataset = DatasetNlfi(cfg.train.dataset.data, grulm.tokenizer, cfg.train.dataset.n_lines)
+    eval_dataset = DatasetNlfi(cfg.eval.dataset.data, grulm.tokenizer, cfg.eval.dataset.n_lines)
 
     train_dataloader = DataLoader(
         dataset=train_dataset,
         batch_size=cfg.train.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.tokenizer.pad_id()),
         shuffle=True,
         pin_memory=True,
         drop_last=True,
@@ -43,7 +48,7 @@ def train_nlfi(cfg: DictConfig):
     eval_dataloader = DataLoader(
         dataset=eval_dataset,
         batch_size=cfg.eval.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.sp.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, grulm.tokenizer.pad_id()),
         shuffle=False,
         drop_last=False,
     )
@@ -102,4 +107,4 @@ def train_nlfi(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    train_nlfi()  # noqa pylint: disable=no-value-for-parameter
+    train_grulm()  # noqa pylint: disable=no-value-for-parameter

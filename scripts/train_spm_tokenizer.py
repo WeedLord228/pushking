@@ -14,7 +14,11 @@ parser.add_argument(
     required=False,
 )
 parser.add_argument(
-    "--artifacts_dir", type=str, help="path to store trained model and vocab", default="spm_artifacts", required=False
+    "--artifacts_dir",
+    type=str,
+    help="path to store trained model and vocab",
+    default="../spm_artifacts",
+    required=False,
 )
 parser.add_argument("--vocab_size", type=int, help="size of vocabulary of the model", default=512, required=False)
 parser.add_argument(
