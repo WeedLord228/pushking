@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from models import SpLightningModule
+from models.sp_lightning_module import SpLightningModule
 
 
 class GRULM(SpLightningModule):
@@ -49,7 +49,7 @@ class GRULM(SpLightningModule):
         return optimizer
 
     def generate_sequence(self, sample, max_len):
-        with torch.no_grad:
+        with torch.no_grad():
             tokenized_sample = (
                 torch.LongTensor([self.tokenizer.bos_id()] + (self.tokenizer.encode_as_ids(sample)))
                 if isinstance(sample, str)

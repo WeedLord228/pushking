@@ -12,16 +12,11 @@ from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from datasets.dataset_nlfi import DatasetNlfi
-from models import GRULM
+from models.grulm import GRULM
 from utils.data_utils import collate_fn_padding_offseted_targets
 
 
-# from datasets.dataset_nlfi import DatasetNlfi
-# from models.grulm import GRULM
-# from utils.data_utils import collate_fn_padding_offseted_targets
-
-
-@hydra.main(config_path="config", config_name="base_train_config")
+@hydra.main(config_path="../config", config_name="base_train_config")
 def train_grulm(cfg: DictConfig):
     seed = 228
     np.random.seed(seed)
