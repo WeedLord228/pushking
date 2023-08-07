@@ -32,6 +32,9 @@ model:
     dir: 'spm_artifacts'
     model_prefix: 'sp_bpe_512'
   hidden_dim: 512
+  checkpoint:
+    metric:
+      'eval_loss'
 
 trainer:
   learning_rate: 1e-3

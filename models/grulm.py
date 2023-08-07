@@ -30,8 +30,7 @@ class GRULM(SpLightningModule):
 
         logits = self.head(out).flatten(start_dim=0, end_dim=1)
         loss = self.loss(logits, y.flatten())
-
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss, logger=True, prog_bar=True, on_epoch=True, on_step=False)
 
         return loss
 
@@ -42,7 +41,9 @@ class GRULM(SpLightningModule):
         loss = self.loss(out, y.flatten())
 
         perplexity = torch.exp(loss).item()
-        self.log_dict({"eval_loss": loss, "eval_pp": perplexity}, prog_bar=True)
+        self.log_dict(
+            {"eval_loss": loss, "eval_pp": perplexity}, prog_bar=True, logger=True, on_epoch=True, on_step=False
+        )
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)

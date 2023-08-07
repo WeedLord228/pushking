@@ -55,13 +55,17 @@ def train_grulm(cfg: DictConfig):
     )
 
     logger = TensorBoardLogger(
-        save_dir=cfg.loggers.tensorboard.dir, name=cfg.loggers.tensorboard.subdir, log_graph=True, version=version_name
+        save_dir=cfg.loggers.tensorboard.dir,
+        name=cfg.loggers.tensorboard.subdir,
+        log_graph=True,
+        version=version_name,
+        default_hp_metric=True,
     )
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"{cfg.loggers.tensorboard.dir}/{cfg.loggers.tensorboard.subdir}/{version_name}",
         filename="grulm_{epoch:2d}_{eval_loss:0.2f}_{eval_pp:0.2f}",
-        monitor="eval_loss",
+        monitor=cfg.model.checkpoint.metric,
     )
 
     rich_progress_bar_callback = RichProgressBar(
