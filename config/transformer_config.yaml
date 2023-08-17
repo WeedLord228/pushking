@@ -1,0 +1,28 @@
+defaults:
+  - base_train_config
+
+loggers:
+  tensorboard:
+    dir: 'tb_logs'
+    subdir: 'transformer'
+
+train:
+  dataset:
+    data: 'materials/train_nlfi.txt'
+    n_tokens: 198
+  dataloader:
+    batch_size: 8
+
+model:
+  hidden_dim: 128
+
+eval:
+  dataset:
+    data: 'materials/eval_nlfi.txt'
+    n_tokens: ${train.dataset.n_tokens}
+  dataloader:
+    batch_size: ${train.dataloader.batch_size}
+
+trainer:
+  learning_rate: 1e-3
+  max_epoch: 20
