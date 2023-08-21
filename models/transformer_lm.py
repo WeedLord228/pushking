@@ -10,9 +10,9 @@ class TransformerLM(SpLightningModule):
         self.max_seq_len = max_seq_len
 
         self.embeddings = nn.Embedding(self.tokenizer.vocab_size(), emb_dim)
-        self.pos_embeddings = nn.Embedding(self.tokenizer.vocab_size(), emb_dim)
+        self.pos_embeddings = nn.Embedding(max_seq_len, emb_dim)
         self.transformer_decoder_layer = torch.nn.TransformerEncoderLayer(
-            d_model=emb_dim, nhead=1, dropout=0, batch_first=True
+            d_model=emb_dim, nhead=4, dropout=0.2, batch_first=True
         )
         self.head = nn.Linear(emb_dim, self.tokenizer.vocab_size())
 
@@ -38,7 +38,8 @@ class TransformerLM(SpLightningModule):
     def training_step(self, batch, batch_idx):  # pylint: disable=W0613
         x, y = batch
 
-        logits = self(x).flatten(start_dim=0, end_dim=1)
+        logits = self(x)
+        logits = logits.flatten(start_dim=0, end_dim=1)
         loss = self.loss(logits, y.flatten())
 
         self.log("train_loss", loss, logger=True, prog_bar=True, on_epoch=True, on_step=True)
@@ -61,8 +62,9 @@ class TransformerLM(SpLightningModule):
 
     @torch.no_grad()
     def generate_sequence(self, sample, tokens_to_generate):
+        self.eval()
         tokenized_sample = (
-            torch.LongTensor([self.tokenizer.bos_id()] + self.tokenizer.encode_as_ids(sample))
+            torch.LongTensor(self.tokenizer.encode_as_ids(sample))
             if isinstance(sample, str)
             else sample
         )
@@ -71,7 +73,7 @@ class TransformerLM(SpLightningModule):
         tokenized_sample = tokenized_sample.to(self.device)
 
         for _ in range(tokens_to_generate):
-            logits = self(torch.unsqueeze(tokenized_sample[-self.max_seq_len :], 0))[0][-1]
+            logits = self(torch.unsqueeze(tokenized_sample, 0))[0][-1]
             next_word = logits.argmax(-1)
             result_ids.append(next_word.item())
 

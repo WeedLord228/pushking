@@ -9,7 +9,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from datasets.dataset_nblock import DatasetNBlock
+from datasets.dataset_nlfi import DatasetNlfi
 from models.transformer_lm import TransformerLM
 from utils.data_utils import collate_fn_padding_offseted_targets
 
@@ -30,15 +30,19 @@ def train_transformer(cfg: DictConfig):
     )
 
     # Initializing data
-    train_dataset = DatasetNBlock(cfg.train.dataset.data, transformer_lm.tokenizer, cfg.train.dataset.n_tokens)
-    eval_dataset = DatasetNBlock(cfg.eval.dataset.data, transformer_lm.tokenizer, cfg.train.dataset.n_tokens)
+    # train_dataset = DatasetNBlock(cfg.train.dataset.data, transformer_lm.tokenizer, cfg.train.dataset.n_tokens)
+    # eval_dataset = DatasetNBlock(cfg.eval.dataset.data, transformer_lm.tokenizer, cfg.train.dataset.n_tokens)
+
+    train_dataset = DatasetNlfi(cfg.train.dataset.data, transformer_lm.tokenizer, cfg.train.dataset.n_lines)
+    eval_dataset = DatasetNlfi(cfg.eval.dataset.data, transformer_lm.tokenizer, cfg.eval.dataset.n_lines)
 
     # -------------------------------------------ВОТ ТУТ Я НАЧАЛ КОПИПАСТИТЬ-------------------------------------------
     train_dataloader = DataLoader(
         dataset=train_dataset,
         batch_size=cfg.train.dataloader.batch_size,
         shuffle=True,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id(),
+                                                                 max_seq_len=cfg.train.dataset.n_tokens),
         pin_memory=True,
         # drop_last=True,
     )
@@ -46,7 +50,8 @@ def train_transformer(cfg: DictConfig):
     eval_dataloader = DataLoader(
         dataset=eval_dataset,
         batch_size=cfg.eval.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id()),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id(),
+                                                                 max_seq_len=cfg.train.dataset.n_tokens),
         shuffle=False,
         drop_last=False,
     )
@@ -86,6 +91,7 @@ def train_transformer(cfg: DictConfig):
 
     # Training
     trainer = L.Trainer(
+        # max_epochs=cfg.trainer.max_epoch, logger=logger, callbacks=[checkpoint_callback]
         max_epochs=cfg.trainer.max_epoch, logger=logger, callbacks=[rich_progress_bar_callback, checkpoint_callback]
     )
     trainer.fit(transformer_lm, train_dataloader, eval_dataloader)
@@ -97,13 +103,13 @@ def train_transformer(cfg: DictConfig):
     # truncated_input_sample = input_sample[:5]
     samples = ["Я один в", "Трепещу,", "С колпаком", "Сон ленивый, ", "Почитать меня"]
 
-    generate_sequence(cfg, transformer_lm, version_name, samples)
+    generate_sequence(cfg, transformer_lm, version_name, samples, 128)
 
 
-def generate_sequence(cfg, model, version_name, samples):
+def generate_sequence(cfg, model, version_name, samples, max_tokens):
     logs = []
     for sample in samples:
-        sample_generate_log = f"Input: {sample}\n" f"Output: {model.generate_sequence(sample, 128)}"
+        sample_generate_log = f"Input: {sample}\n" f"Output: {model.generate_sequence(sample, max_tokens)}"
         logs.append(sample_generate_log)
 
     for log in logs:

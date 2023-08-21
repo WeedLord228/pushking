@@ -9,9 +9,9 @@ loggers:
 train:
   dataset:
     data: 'materials/train_nlfi.txt'
-    n_tokens: 198
+    n_tokens: 512
   dataloader:
-    batch_size: 8
+    batch_size: 32
 
 model:
   hidden_dim: 128
@@ -24,5 +24,5 @@ eval:
     batch_size: ${train.dataloader.batch_size}
 
 trainer:
-  learning_rate: 1e-3
-  max_epoch: 20
+  learning_rate: 3e-4
+  max_epoch: 60
