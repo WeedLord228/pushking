@@ -63,11 +63,7 @@ class TransformerLM(SpLightningModule):
     @torch.no_grad()
     def generate_sequence(self, sample, tokens_to_generate):
         self.eval()
-        tokenized_sample = (
-            torch.LongTensor(self.tokenizer.encode_as_ids(sample))
-            if isinstance(sample, str)
-            else sample
-        )
+        tokenized_sample = torch.LongTensor(self.tokenizer.encode_as_ids(sample)) if isinstance(sample, str) else sample
 
         result_ids = tokenized_sample.tolist()
         tokenized_sample = tokenized_sample.to(self.device)

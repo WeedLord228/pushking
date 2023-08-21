@@ -41,8 +41,9 @@ def train_transformer(cfg: DictConfig):
         dataset=train_dataset,
         batch_size=cfg.train.dataloader.batch_size,
         shuffle=True,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id(),
-                                                                 max_seq_len=cfg.train.dataset.n_tokens),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(
+            x, transformer_lm.tokenizer.pad_id(), max_seq_len=cfg.train.dataset.n_tokens
+        ),
         pin_memory=True,
         # drop_last=True,
     )
@@ -50,8 +51,9 @@ def train_transformer(cfg: DictConfig):
     eval_dataloader = DataLoader(
         dataset=eval_dataset,
         batch_size=cfg.eval.dataloader.batch_size,
-        collate_fn=lambda x: collate_fn_padding_offseted_targets(x, transformer_lm.tokenizer.pad_id(),
-                                                                 max_seq_len=cfg.train.dataset.n_tokens),
+        collate_fn=lambda x: collate_fn_padding_offseted_targets(
+            x, transformer_lm.tokenizer.pad_id(), max_seq_len=cfg.train.dataset.n_tokens
+        ),
         shuffle=False,
         drop_last=False,
     )
@@ -92,7 +94,9 @@ def train_transformer(cfg: DictConfig):
     # Training
     trainer = L.Trainer(
         # max_epochs=cfg.trainer.max_epoch, logger=logger, callbacks=[checkpoint_callback]
-        max_epochs=cfg.trainer.max_epoch, logger=logger, callbacks=[rich_progress_bar_callback, checkpoint_callback]
+        max_epochs=cfg.trainer.max_epoch,
+        logger=logger,
+        callbacks=[rich_progress_bar_callback, checkpoint_callback],
     )
     trainer.fit(transformer_lm, train_dataloader, eval_dataloader)
 
