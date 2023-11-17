@@ -1,0 +1,25 @@
+defaults:
+  - grucls_train_config
+
+hydra:
+  sweeper:
+    params:
+      model.virtual_adversarial_training.num_iterations: 1
+      model.virtual_adversarial_training.epsilon: 5, 3, 1, 1e-1
+      model.virtual_adversarial_training.xi: 1, 1e-1, 3e-1
+
+model:
+  tokenizer:
+    dir: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/cls_artifacts'
+
+train:
+  dataset:
+    data: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/materials/twitter_corp/train_no_par.csv'
+
+eval:
+  dataset:
+    data: 'C:/SeriousStuff/Notebooks/NLP/BONUS.pushking/materials/twitter_corp/val_no_par.csv'
+
+
+trainer:
+  max_epoch: 20

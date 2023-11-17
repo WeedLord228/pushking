@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+
+model:
+  path_to_checkpoints:
+    - 'C:\SeriousStuff\Notebooks\NLP\BONUS.pushking\multirun\2023-11-17\03-36-00\8\tb_logs\grucls\grucls_lr0.0003_hd256__VAT_iter1_eps1_xi0.3__17.11.23_04.22\grulm_epoch=19_eval_loss=0.57_eval_f1=0.80.ckpt'
+    - 'C:\SeriousStuff\Notebooks\NLP\BONUS.pushking\tb_logs\grucls\grucls_0.0003lr_256_noiseFalse_advTrainTruehd_15.11.23_04.36\grulm_epoch=15_eval_loss=0.45_eval_f1=0.80.ckpt'
+    - 'C:\SeriousStuff\Notebooks\NLP\BONUS.pushking\tb_logs\grucls\grucls_0.0003lr_256_noiseFalse_hd_15.11.23_04.20\grulm_epoch= 8_eval_loss=0.49_eval_f1=0.78.ckpt'
+
+
+log:
+  file: 'inference_log.txt'

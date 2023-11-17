@@ -1,0 +1,48 @@
+defaults:
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+
+train:
+  dataset:
+    data: 'materials/twitter_corp/train_no_par.csv'
+  dataloader:
+    batch_size: 512
+
+eval:
+  dataset:
+    data: 'materials/twitter_corp/val_no_par.csv'
+  dataloader:
+    batch_size: ${train.dataloader.batch_size}
+
+loggers:
+  tensorboard:
+    dir: 'tb_logs'
+    subdir: 'grucls'
+
+model:
+  noise: False
+  adversarial_training:
+    available: False
+    epsilon: 1e-2
+  virtual_adversarial_training:
+    available: True
+    num_iterations: 1
+    epsilon: 1e-2
+    xi: 1e-2
+  tokenizer:
+    dir: 'cls_artifacts'
+    model_prefix: 'sp_bpe_1024'
+  hidden_dim: 256
+  checkpoint:
+    metric:
+      'eval_f1'
+
+trainer:
+  learning_rate: 3e-4
+  max_epoch: 20
